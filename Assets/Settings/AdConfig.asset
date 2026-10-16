@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f603d15f7d365148ac30acc244e145d, type: 3}
+  m_Name: AdConfig
+  m_EditorClassIdentifier: Template.Core::Template.Core.Ads.AdConfig
+  adsEnabled: 1
+  android:
+    banner: ca-app-pub-3940256099942544/9214589741
+    interstitial: ca-app-pub-3940256099942544/1033173712
+    rewarded: ca-app-pub-3940256099942544/5224354917
+  ios:
+    banner: ca-app-pub-3940256099942544/2435281174
+    interstitial: ca-app-pub-3940256099942544/4411468910
+    rewarded: ca-app-pub-3940256099942544/1712485313
+  bannerPosition: 1
+  interstitialCooldown: 30
+  maxRetryDelay: 64
+  requestConsent: 1
+  tagForUnderAgeOfConsent: 0
+  testDeviceIds: []
+  debugGeography: 0
