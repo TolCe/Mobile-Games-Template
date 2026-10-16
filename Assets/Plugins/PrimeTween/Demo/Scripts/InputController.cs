@@ -12,7 +12,7 @@ namespace PrimeTweenDemo {
         void Awake() {
             if (isNewInputSystemEnabled && !isLegacyInputManagerEnabled) {
                 gameObject.SetActive(false);
-                #if INPUT_SYSTEM_INSTALLED && ENABLE_INPUT_SYSTEM
+                #if INPUT_SYSTEM_INSTALLED && ENABLE_INPUT_SYSTEM && UNITY_UGUI_INSTALLED
                 var inputModule = gameObject.AddComponent<InputSystemUIInputModule>();
                 inputModule.pointerBehavior = UIPointerBehavior.AllPointersAsIs;
                 EnhancedTouchSupport.Enable();

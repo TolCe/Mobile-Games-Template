@@ -32,9 +32,9 @@ namespace Template.Core.Ads
                 return;
             }
 
-            // Ad events are queued to the main thread by the SDK; UMP and init callbacks are marshalled here.
+            // The SDK may call back on a background thread. Ad units queue their events with
+            // MobileAdsEventExecutor.ExecuteInUpdate; UMP and init callbacks are marshalled here.
             mainThread = SynchronizationContext.Current;
-            MobileAds.RaiseAdEventsOnUnityMainThread = true;
             MobileAds.SetRequestConfiguration(new RequestConfiguration
             {
                 TestDeviceIds = new List<string>(config.TestDeviceIds)

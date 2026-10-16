@@ -1,5 +1,6 @@
 using System;
 using GoogleMobileAds.Api;
+using GoogleMobileAds.Common;
 using PrimeTween;
 using UnityEngine;
 
@@ -9,7 +10,10 @@ namespace Template.Core.Ads
     public sealed class RewardedAdUnit : IRewardedAd, IDisposable
     {
         private readonly AdConfig config;
+        private readonly Action<RewardedAd, LoadAdError> onLoaded;
         private readonly Action<Reward> onUserEarnedReward;
+        private readonly Action markEarned;
+        private readonly Action finish;
         private RewardedAd ad;
         private bool isLoading;
         private bool disposed;
@@ -21,7 +25,10 @@ namespace Template.Core.Ads
         public RewardedAdUnit(AdConfig config)
         {
             this.config = config;
+            onLoaded = OnLoaded;
             onUserEarnedReward = OnUserEarnedReward;
+            markEarned = MarkEarned;
+            finish = Finish;
         }
 
         public event Action<bool> ReadyChanged;
@@ -36,7 +43,8 @@ namespace Template.Core.Ads
             if (string.IsNullOrEmpty(unitId)) return;
 
             isLoading = true;
-            RewardedAd.Load(unitId, new AdRequest(), OnLoaded);
+            RewardedAd.Load(unitId, new AdRequest(), (loaded, error) =>
+                MobileAdsEventExecutor.ExecuteInUpdate(() => onLoaded(loaded, error)));
         }
 
         public bool Show(Action<bool> onFinished)
@@ -80,20 +88,30 @@ namespace Template.Core.Ads
             ReadyChanged?.Invoke(true);
         }
 
+        // SDK events can arrive on a background thread. They share one queue, so a reward
+        // is always recorded before the close that follows it is handled.
         private void OnUserEarnedReward(Reward reward)
         {
-            earned = true;
+            MobileAdsEventExecutor.ExecuteInUpdate(markEarned);
         }
 
         private void OnClosed()
         {
-            Finish();
+            MobileAdsEventExecutor.ExecuteInUpdate(finish);
         }
 
         private void OnShowFailed(AdError error)
         {
-            Debug.LogWarning($"[Ads] Rewarded ad failed to show: {error.GetMessage()}");
-            Finish();
+            MobileAdsEventExecutor.ExecuteInUpdate(() =>
+            {
+                Debug.LogWarning($"[Ads] Rewarded ad failed to show: {error.GetMessage()}");
+                Finish();
+            });
+        }
+
+        private void MarkEarned()
+        {
+            earned = true;
         }
 
         private void Finish()

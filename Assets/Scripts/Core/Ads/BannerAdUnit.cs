@@ -1,5 +1,6 @@
 using System;
 using GoogleMobileAds.Api;
+using GoogleMobileAds.Common;
 using PrimeTween;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace Template.Core.Ads
     public sealed class BannerAdUnit : IBannerAd, IDisposable
     {
         private readonly AdConfig config;
+        private readonly Action handleLoaded;
         private BannerView view;
         private bool visible;
         private int failedAttempts;
@@ -17,6 +19,7 @@ namespace Template.Core.Ads
         public BannerAdUnit(AdConfig config)
         {
             this.config = config;
+            handleLoaded = HandleLoaded;
         }
 
         public void Show()
@@ -66,16 +69,29 @@ namespace Template.Core.Ads
             view?.LoadAd(new AdRequest());
         }
 
+        // SDK events can arrive on a background thread.
         private void OnLoaded()
         {
-            failedAttempts = 0;
-
-            // A banner makes itself visible on every load, including auto-refresh.
-            if (!visible) view.Hide();
+            MobileAdsEventExecutor.ExecuteInUpdate(handleLoaded);
         }
 
         private void OnLoadFailed(LoadAdError error)
         {
+            MobileAdsEventExecutor.ExecuteInUpdate(() => HandleLoadFailed(error));
+        }
+
+        private void HandleLoaded()
+        {
+            failedAttempts = 0;
+
+            // A banner makes itself visible on every load, including auto-refresh.
+            if (!visible) view?.Hide();
+        }
+
+        private void HandleLoadFailed(LoadAdError error)
+        {
+            if (view == null) return;
+
             Debug.LogWarning($"[Ads] Banner failed to load: {error.GetMessage()}");
             failedAttempts++;
             retry = Tween.Delay(this, config.GetRetryDelay(failedAttempts), static unit => unit.Load(), useUnscaledTime: true);

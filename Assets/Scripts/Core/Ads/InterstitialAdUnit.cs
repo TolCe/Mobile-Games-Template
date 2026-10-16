@@ -1,5 +1,6 @@
 using System;
 using GoogleMobileAds.Api;
+using GoogleMobileAds.Common;
 using PrimeTween;
 using UnityEngine;
 
@@ -9,6 +10,8 @@ namespace Template.Core.Ads
     public sealed class InterstitialAdUnit : IInterstitialAd, IDisposable
     {
         private readonly AdConfig config;
+        private readonly Action<InterstitialAd, LoadAdError> onLoaded;
+        private readonly Action finish;
         private InterstitialAd ad;
         private bool isLoading;
         private bool disposed;
@@ -19,6 +22,8 @@ namespace Template.Core.Ads
         public InterstitialAdUnit(AdConfig config)
         {
             this.config = config;
+            onLoaded = OnLoaded;
+            finish = Finish;
         }
 
         public bool IsReady => ad != null && ad.CanShowAd();
@@ -31,7 +36,8 @@ namespace Template.Core.Ads
             if (string.IsNullOrEmpty(unitId)) return;
 
             isLoading = true;
-            InterstitialAd.Load(unitId, new AdRequest(), OnLoaded);
+            InterstitialAd.Load(unitId, new AdRequest(), (loaded, error) =>
+                MobileAdsEventExecutor.ExecuteInUpdate(() => onLoaded(loaded, error)));
         }
 
         public bool Show(Action onClosed)
@@ -73,15 +79,19 @@ namespace Template.Core.Ads
             ad.OnAdFullScreenContentFailed += OnShowFailed;
         }
 
+        // SDK events can arrive on a background thread.
         private void OnClosed()
         {
-            Finish();
+            MobileAdsEventExecutor.ExecuteInUpdate(finish);
         }
 
         private void OnShowFailed(AdError error)
         {
-            Debug.LogWarning($"[Ads] Interstitial failed to show: {error.GetMessage()}");
-            Finish();
+            MobileAdsEventExecutor.ExecuteInUpdate(() =>
+            {
+                Debug.LogWarning($"[Ads] Interstitial failed to show: {error.GetMessage()}");
+                Finish();
+            });
         }
 
         private void Finish()
